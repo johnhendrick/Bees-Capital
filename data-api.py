@@ -7,17 +7,18 @@ from mpl_finance import candlestick_ohlc, volume_overlay3
 import matplotlib.dates as dates
 import datetime
 import matplotlib.transforms as transform
+import re
 
 
-def _request(symbol, req_type):
+def _request(morepayload):
     # QUERY_URL = "https://www.alphavantage.co/query?function={REQUEST_TYPE}&apikey={KEY}&symbol={SYMBOL}&datatype=json"
 
     QUERY_URL = "https://www.alphavantage.co/query?"
 
     API_KEY = '32LEG0B1PYUNA7WO'
 
-    payload = {'apikey': '32LEG0B1PYUNA7WO', 'symbol': symbol,
-               'function': req_type, 'datatype': 'json'}
+    payload = {'apikey': '32LEG0B1PYUNA7WO', 'datatype': 'json'}
+    payload.update(morepayload)
 
     # data = requests.get(QUERY_URL.format(
     #    REQUEST_TYPE=req_type, KEY=API_KEY, SYMBOL=symbol))
@@ -27,11 +28,33 @@ def _request(symbol, req_type):
 
 
 def get_daily_data(symbol):
-    return _request(symbol, 'TIME_SERIES_DAILY')
+    return _request({'symbol': symbol,
+                     'function': 'TIME_SERIES_DAILY',
+                     'outputsize': 'full'})
 
 
-def write_this(data):
-    with open('output.txt', 'w') as outfile:
+def get_RSI(symbol, days):
+    return _request({'symbol': symbol,
+                     'function': 'RSI',
+                     'series_type': 'close',
+                     'time_period': days,
+                     'interval': 'daily'
+                     })
+
+
+def get_MACD(symbol):
+    return _request({'symbol': symbol,
+                     'function': 'MACD',
+                     'series_type': 'close',
+                     'interval': 'daily'
+                     })
+
+
+def write_this(data, symbol):
+
+    info = str(list(data.keys())[1]).replace(":", "", 3)
+
+    with open(symbol + '_' + info + '.txt', 'w') as outfile:
         json.dump(data, outfile)
 
 
@@ -47,12 +70,11 @@ def overlay_volume(ax1, data_df):
             color='red', width=1, align='center', alpha=0.3)
 
     yticks = ax2.get_yticks()
-    # ax2.set_yticks(yticks[::3])
 
     ax2.yaxis.set_label_position("right")
     ax2.set_ylim([0, 5*data_df['5. volume'].max()])
     ax2.set_yticks(
-        np.arange(0, data_df['5. volume'].max()*1.25+1, data_df['5. volume'].max()/5))
+        np.arange(0, data_df['5. volume'].max()*1.25+1, data_df['5. volume'].max()/4))
 
     return ax2
 
@@ -64,9 +86,17 @@ def overlay_ema(ax, dates, prices, days):
     return ax.plot(dates, exp, label=legend)
 
 
-data = get_daily_data('FB')
-write_this(data)
+# data = get_daily_data('FB')
+# write_this(data, 'FB')
 
+# data_RSI = get_RSI('FB', 28)
+# write_this(data_RSI, 'FB')
+
+# data_MACD = get_MACD('FB')
+# write_this(data_MACD, 'FB')
+
+
+# with open('FB_Time Series (Daily).txt') as json_file:
 with open('output.txt') as json_file:
     data = json.load(json_file)
     time_series = data['Time Series (Daily)']
@@ -77,8 +107,6 @@ with open('output.txt') as json_file:
                                                data_df['index'], len(data_df['index'])*['%Y-%m-%d'])))
     data_df.sort_values(by=['index'], inplace=True)
 
-print(data_df.dtypes)
-print(data_df)
 
 # add subplot
 f1, ax1 = plt.subplots(figsize=(10, 5))
