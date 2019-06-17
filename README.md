@@ -12,9 +12,9 @@ Data thanks to Alphavantage APIs
 - [x] Volume	
 - [ ] Fundamentals	(WIP)
 - [ ] Clustering ML	(WIP)
-- [ ] NN	(WIP)
+- [ ] Neural Network (WIP)
 - [x] Matplotlib plots
-- [ ] ARIMA	(WIP)
+- [ ] ARIMA forecasting	(WIP)
 - [x] EMA	
 - [ ] js front end	(WIP)
 - [ ] Algorithmic trading with deep learning experiments	(WIP)
